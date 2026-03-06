@@ -117,7 +117,7 @@ function Banner({ inProgress, resolved }) {
         {/* In Progress */}
         <div style={{
           borderRadius:18, overflow:"hidden", position:"relative",
-          background:"linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)",
+          background:"linear-gradient(135deg,#8b5cf6 0%,#7c3aed 40%,#4c1d95 100%)",
           minHeight:155, display:"flex", flexDirection:"column",
           alignItems:"center", justifyContent:"center", padding:"32px 24px",
           boxShadow:"0 8px 32px rgba(124,58,237,0.25)"
@@ -128,7 +128,7 @@ function Banner({ inProgress, resolved }) {
             backgroundSize:"cover", backgroundPosition:"center right",
             opacity:0.2, mixBlendMode:"screen"
           }}/>
-          <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:"rgba(167,139,250,0.3)", filter:"blur(40px)" }}/>
+          <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:"rgba(196,181,253,0.5)", filter:"blur(40px)" }}/>
           <p style={{ fontFamily:"Inter,sans-serif", fontSize:15, color:"rgba(255,255,255,0.8)", fontWeight:500, marginBottom:10, zIndex:1, letterSpacing:0.3 }}>In-Progress</p>
           <p style={{ fontFamily:"Inter,sans-serif", fontSize:72, fontWeight:800, color:"#fff", lineHeight:1, zIndex:1 }}>{inProgress}</p>
         </div>
@@ -136,7 +136,7 @@ function Banner({ inProgress, resolved }) {
         {/* Resolved */}
         <div style={{
           borderRadius:18, overflow:"hidden", position:"relative",
-          background:"linear-gradient(135deg,#16a34a 0%,#15803d 100%)",
+          background:"linear-gradient(135deg,#4ade80 0%,#16a34a 40%,#14532d 100%)",
           minHeight:155, display:"flex", flexDirection:"column",
           alignItems:"center", justifyContent:"center", padding:"32px 24px",
           boxShadow:"0 8px 32px rgba(22,163,74,0.25)"
@@ -147,7 +147,7 @@ function Banner({ inProgress, resolved }) {
             backgroundSize:"cover", backgroundPosition:"center right",
             opacity:0.15, mixBlendMode:"screen"
           }}/>
-          <div style={{ position:"absolute", top:-40, left:-40, width:180, height:180, borderRadius:"50%", background:"rgba(74,222,128,0.25)", filter:"blur(40px)" }}/>
+          <div style={{ position:"absolute", top:-40, left:-40, width:180, height:180, borderRadius:"50%", background:"rgba(134,239,172,0.45)", filter:"blur(40px)" }}/>
           <p style={{ fontFamily:"Inter,sans-serif", fontSize:15, color:"rgba(255,255,255,0.8)", fontWeight:500, marginBottom:10, zIndex:1, letterSpacing:0.3 }}>Resolved</p>
           <p style={{ fontFamily:"Inter,sans-serif", fontSize:72, fontWeight:800, color:"#fff", lineHeight:1, zIndex:1 }}>{resolved}</p>
         </div>
