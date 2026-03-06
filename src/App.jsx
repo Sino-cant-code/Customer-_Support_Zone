@@ -635,7 +635,7 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #08080e; color: #fff; }
+        body { background: #08080e; color: #111; }
         @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:none; } }
         ::-webkit-scrollbar { width: 6px; } 
         ::-webkit-scrollbar-track { background: transparent; }
