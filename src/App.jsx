@@ -1,510 +1,296 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-// ─── Toast System ────────────────────────────────────────────────────────────
-function ToastContainer({ toasts, removeToast }) {
-  return (
-    <div style={{
-      position: "fixed", top: 20, right: 20, zIndex: 9999,
-      display: "flex", flexDirection: "column", gap: 10, maxWidth: 340
-    }}>
-      {toasts.map(t => (
-        <div key={t.id} style={{
-          background: t.type === "success" ? "#0f2" : t.type === "info" ? "#38bdf8" : "#f59e0b",
-          color: "#000", padding: "12px 18px", borderRadius: 8,
-          fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 700,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          animation: "toastIn 0.3s ease",
-          border: "1.5px solid rgba(0,0,0,0.15)"
-        }}>
-          <span>{t.type === "success" ? "✅ " : t.type === "info" ? "📌 " : "⚡ "}{t.msg}</span>
-          <button onClick={() => removeToast(t.id)} style={{
-            background: "none", border: "none", cursor: "pointer",
-            fontSize: 16, marginLeft: 12, opacity: 0.6
-          }}>✕</button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
+// ─── Toast ────────────────────────────────────────────────────────────────────
 function useToast() {
   const [toasts, setToasts] = useState([]);
   const addToast = (msg, type = "info") => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    setToasts(p => [...p, { id, msg, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500);
   };
-  const removeToast = id => setToasts(prev => prev.filter(t => t.id !== id));
+  const removeToast = id => setToasts(p => p.filter(t => t.id !== id));
   return { toasts, addToast, removeToast };
 }
 
-// ─── Initial Data ─────────────────────────────────────────────────────────────
-const INITIAL_TICKETS = [
-  { id: 1, title: "Login page crashes on Safari", description: "Users on Safari 16+ report a white screen on login. Affects ~12% of users.", customer: "Aria Hossain", priority: "High", status: "open", createdAt: "2025-02-01" },
-  { id: 2, title: "Invoice PDF not generating", description: "PDF export button returns 500 error for invoices older than 6 months.", customer: "Rafi Islam", priority: "Critical", status: "open", createdAt: "2025-02-03" },
-  { id: 3, title: "Dark mode toggle missing", description: "The dark mode toggle disappeared after the last UI update.", customer: "Sumaiya Khan", priority: "Low", status: "open", createdAt: "2025-02-05" },
-  { id: 4, title: "Email notifications delayed", description: "Transactional emails arrive 20–40 minutes late, causing user confusion.", customer: "Tanvir Ahmed", priority: "High", status: "open", createdAt: "2025-02-06" },
-  { id: 5, title: "Cart total miscalculates discount", description: "10% coupon applies on top of already-discounted items instead of base price.", customer: "Nadia Begum", priority: "Critical", status: "open", createdAt: "2025-02-07" },
-  { id: 6, title: "Search returns no results for Bengali text", description: "Product search completely fails when query contains Bengali Unicode characters.", customer: "Mahbub Alam", priority: "Medium", status: "open", createdAt: "2025-02-09" },
-  { id: 7, title: "Profile photo upload size limit too small", description: "Current 200KB limit is too restrictive. Users request at least 2MB.", customer: "Sadia Parvin", priority: "Low", status: "open", createdAt: "2025-02-10" },
-  { id: 8, title: "Two-factor auth SMS not delivered", description: "OTP SMS fails for Grameenphone numbers. Robi and Banglalink work fine.", customer: "Imran Chowdhury", priority: "Critical", status: "open", createdAt: "2025-02-11" },
-  { id: 9, title: "Dashboard charts blank on Firefox", description: "All Chart.js graphs render as empty canvases in Firefox 121+.", customer: "Farhan Hasan", priority: "High", status: "open", createdAt: "2025-02-12" },
-  { id: 10, title: "Password reset link expires too fast", description: "Reset links expire after 5 minutes. Users request at least 30 minutes.", customer: "Mehnaz Sultana", priority: "Medium", status: "open", createdAt: "2025-02-13" },
-  { id: 11, title: "Order tracking page 404", description: "Clicking 'Track Order' in confirmation email leads to a 404 page.", customer: "Zahid Hossain", priority: "High", status: "open", createdAt: "2025-02-14" },
-  { id: 12, title: "Export to Excel fails for large datasets", description: "Exporting more than 500 rows times out and shows a generic error.", customer: "Rashida Khanam", priority: "Medium", status: "open", createdAt: "2025-02-15" },
-];
-
-const PRIORITY_COLOR = {
-  Critical: { bg: "#ff2d55", text: "#fff" },
-  High:     { bg: "#ff9500", text: "#000" },
-  Medium:   { bg: "#38bdf8", text: "#000" },
-  Low:      { bg: "#34c759", text: "#000" },
-};
-
-// ─── Navbar ───────────────────────────────────────────────────────────────────
-function Navbar({ onNewTicket, mobileOpen, setMobileOpen }) {
+function ToastContainer({ toasts, removeToast }) {
+  const colors = { success: "#22c55e", error: "#ef4444", info: "#7c3aed" };
+  const icons  = { success: "✅", error: "❌", info: "📌" };
   return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 100,
-      background: "rgba(8,8,12,0.85)", backdropFilter: "blur(16px)",
-      borderBottom: "1px solid rgba(255,255,255,0.07)",
-      padding: "0 32px", height: 64,
-      display: "flex", alignItems: "center", justifyContent: "space-between"
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: 8,
-          background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 900, fontSize: 16, color: "#000"
-        }}>S</div>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.5 }}>
-          SupportZone
-        </span>
-      </div>
-
-      {/* Desktop Nav */}
-      <div style={{ display: "flex", alignItems: "center", gap: 28 }} className="desktop-nav">
-        {["Home", "Tickets", "Docs", "Status"].map(item => (
-          <a key={item} href="#" style={{
-            fontFamily: "'Space Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.55)",
-            textDecoration: "none", letterSpacing: 0.5,
-            transition: "color 0.2s"
-          }}
-          onMouseEnter={e => e.target.style.color = "#fff"}
-          onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.55)"}
-          >{item}</a>
-        ))}
-        <button onClick={onNewTicket} style={{
-          background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-          border: "none", borderRadius: 8, padding: "9px 20px",
-          fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13,
-          cursor: "pointer", color: "#000", letterSpacing: 0.3,
-          transition: "transform 0.15s, box-shadow 0.15s",
-          boxShadow: "0 0 16px rgba(0,255,136,0.3)"
-        }}
-        onMouseEnter={e => { e.target.style.transform = "translateY(-1px)"; e.target.style.boxShadow = "0 4px 24px rgba(0,255,136,0.45)"; }}
-        onMouseLeave={e => { e.target.style.transform = ""; e.target.style.boxShadow = "0 0 16px rgba(0,255,136,0.3)"; }}
-        >+ New Ticket</button>
-      </div>
-
-      {/* Mobile Hamburger */}
-      <button onClick={() => setMobileOpen(!mobileOpen)} className="hamburger" style={{
-        background: "none", border: "none", cursor: "pointer", display: "none",
-        flexDirection: "column", gap: 5, padding: 4
-      }}>
-        {[0,1,2].map(i => <span key={i} style={{ display: "block", width: 22, height: 2, background: "#fff", borderRadius: 2 }} />)}
-      </button>
-
-      <style>{`
-        @media(max-width:768px){
-          .desktop-nav{display:none!important;}
-          .hamburger{display:flex!important;}
-        }
-      `}</style>
-    </nav>
-  );
-}
-
-// ─── Mobile Menu ──────────────────────────────────────────────────────────────
-function MobileMenu({ open, onNewTicket, onClose }) {
-  if (!open) return null;
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 99,
-      background: "rgba(8,8,12,0.97)", backdropFilter: "blur(20px)",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", gap: 32
-    }}>
-      <button onClick={onClose} style={{
-        position: "absolute", top: 20, right: 24,
-        background: "none", border: "none", color: "#fff", fontSize: 26, cursor: "pointer"
-      }}>✕</button>
-      {["Home", "Tickets", "Docs", "Status"].map(item => (
-        <a key={item} onClick={onClose} href="#" style={{
-          fontFamily: "'Space Mono', monospace", fontSize: 22, color: "#fff",
-          textDecoration: "none", letterSpacing: 1
-        }}>{item}</a>
+    <div style={{ position:"fixed", top:20, right:20, zIndex:9999, display:"flex", flexDirection:"column", gap:10, maxWidth:320 }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          background: colors[t.type], color:"#fff", padding:"12px 16px", borderRadius:10,
+          fontFamily:"Inter,sans-serif", fontSize:13, fontWeight:600,
+          boxShadow:"0 4px 20px rgba(0,0,0,0.18)",
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          animation:"slideIn 0.3s ease"
+        }}>
+          <span>{icons[t.type]} {t.msg}</span>
+          <button onClick={() => removeToast(t.id)} style={{ background:"none", border:"none", color:"#fff", cursor:"pointer", fontSize:16, marginLeft:10 }}>✕</button>
+        </div>
       ))}
-      <button onClick={() => { onNewTicket(); onClose(); }} style={{
-        background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-        border: "none", borderRadius: 10, padding: "14px 36px",
-        fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 15,
-        cursor: "pointer", color: "#000"
-      }}>+ New Ticket</button>
     </div>
   );
 }
 
-// ─── Banner ───────────────────────────────────────────────────────────────────
-function Banner({ inProgressCount, resolvedCount, totalCount }) {
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const INITIAL_TICKETS = [
+  { id:1001, title:"Login Issues - Can't Access Account",    description:"Customer is unable to log in to their account. They've tried resetting their password multiple times but still can't get in.", customer:"John Smith",    priority:"High",   status:"open", createdAt:"1/15/2024" },
+  { id:1002, title:"Payment Failed - Card Declined",         description:"Customer attempted to pay using Visa ending 1234 but the payment keeps failing despite sufficient balance.",                  customer:"Sarah Johnson", priority:"High",   status:"open", createdAt:"1/16/2024" },
+  { id:1003, title:"Unable to Download Invoice",             description:"Customer cannot download their January invoice from the billing section. The download button is not responding.",             customer:"Michael Brown", priority:"Medium", status:"open", createdAt:"1/17/2024" },
+  { id:1004, title:"Incorrect Billing Address",              description:"Customer's billing address shows a different city. They updated it but it still displays the old one.",                       customer:"Emily Davis",   priority:"Low",    status:"open", createdAt:"1/18/2024" },
+  { id:1005, title:"App Crash on Launch",                    description:"Customer reports that the mobile app crashes immediately upon opening on Android 13.",                                        customer:"David Wilson",  priority:"High",   status:"open", createdAt:"1/19/2024" },
+  { id:1006, title:"Refund Not Processed",                   description:"Customer requested a refund two weeks ago but has not received the amount yet.",                                              customer:"Sophia Taylor", priority:"Medium", status:"open", createdAt:"1/20/2024" },
+  { id:1007, title:"Two-Factor Authentication Issue",        description:"Customer is not receiving 2FA codes on their registered phone number.",                                                       customer:"James Anderson",priority:"High",   status:"open", createdAt:"1/21/2024" },
+  { id:1008, title:"Unable to Update Profile Picture",       description:"Customer tries to upload a new profile picture but gets 'Upload failed' error.",                                             customer:"Olivia Martinez",priority:"Low",  status:"open", createdAt:"1/22/2024" },
+  { id:1009, title:"Subscription Auto-Renewal",              description:"Customer wants to enable auto-renewal for their subscription but the toggle is disabled.",                                   customer:"Liam Thomas",   priority:"Medium", status:"open", createdAt:"1/17/2024" },
+  { id:1010, title:"Missing Order Confirmation Email",       description:"Customer placed an order but didn't receive a confirmation email even though payment succeeded.",                            customer:"Isabella Garcia",priority:"Medium",status:"open", createdAt:"1/24/2024" },
+  { id:1011, title:"Discount Code Not Working",              description:"Customer is trying to apply a discount code at checkout but keeps getting an invalid code error.",                           customer:"Noah Lee",      priority:"Low",    status:"open", createdAt:"1/25/2024" },
+  { id:1012, title:"Account Locked After Multiple Attempts", description:"Customer account got locked after entering the wrong password 3 times. They need it unlocked.",                             customer:"Emma White",    priority:"High",   status:"open", createdAt:"1/26/2024" },
+];
+
+const PRIORITY = {
+  High:     { color:"#ef4444", label:"HIGH PRIORITY" },
+  Medium:   { color:"#f59e0b", label:"MEDIUM PRIORITY" },
+  Low:      { color:"#22c55e", label:"LOW PRIORITY" },
+  Critical: { color:"#7c3aed", label:"CRITICAL" },
+};
+
+// ─── Navbar ───────────────────────────────────────────────────────────────────
+function Navbar({ onNew, mobileOpen, setMobileOpen }) {
   return (
-    <section style={{
-      position: "relative", overflow: "hidden",
-      background: "linear-gradient(135deg, #080810 0%, #0a1628 45%, #081420 100%)",
-      padding: "72px 40px 64px",
-      borderBottom: "1px solid rgba(255,255,255,0.06)"
-    }}>
-      {/* Background vector image */}
-      <div style={{
-        position: "absolute", inset: 0,
-        backgroundImage: "url('/mnt/user-data/uploads/vector1.png')",
-        backgroundSize: "cover", backgroundPosition: "center",
-        opacity: 0.18
-      }} />
-      {/* Glow */}
-      <div style={{
-        position: "absolute", top: -80, right: -80,
-        width: 400, height: 400, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(0,255,136,0.12) 0%, transparent 70%)",
-        pointerEvents: "none"
-      }} />
-      <div style={{
-        position: "absolute", bottom: -100, left: 100,
-        width: 300, height: 300, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(0,180,216,0.1) 0%, transparent 70%)",
-        pointerEvents: "none"
-      }} />
-
-      <div style={{ position: "relative", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{
-          display: "inline-block",
-          background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.3)",
-          borderRadius: 100, padding: "4px 14px", marginBottom: 20,
-          fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#00ff88",
-          letterSpacing: 2, textTransform: "uppercase"
-        }}>Live Support System</div>
-
-        <h1 style={{
-          fontFamily: "'Syne', sans-serif", fontWeight: 800,
-          fontSize: "clamp(36px, 5vw, 64px)", color: "#fff",
-          lineHeight: 1.1, marginBottom: 16, letterSpacing: -1
-        }}>
-          Customer<br />
-          <span style={{ background: "linear-gradient(90deg,#00ff88,#00b4d8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            Support Zone
-          </span>
-        </h1>
-        <p style={{
-          fontFamily: "'Space Mono', monospace", color: "rgba(255,255,255,0.45)",
-          fontSize: 14, maxWidth: 480, lineHeight: 1.8, marginBottom: 48
-        }}>
-          Track, manage, and resolve customer issues efficiently. Real-time ticket management for your support team.
-        </p>
-
-        {/* Stats */}
-        <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-          {[
-            { label: "Total Tickets", value: totalCount, accent: "#fff" },
-            { label: "In Progress", value: inProgressCount, accent: "#f59e0b" },
-            { label: "Resolved", value: resolvedCount, accent: "#00ff88" },
-          ].map(stat => (
-            <div key={stat.label} style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              backdropFilter: "blur(12px)",
-              borderRadius: 14, padding: "20px 32px",
-              textAlign: "center", minWidth: 130
-            }}>
-              <div style={{
-                fontFamily: "'Syne', sans-serif", fontWeight: 800,
-                fontSize: 42, color: stat.accent, lineHeight: 1,
-                marginBottom: 6
-              }}>{stat.value}</div>
-              <div style={{
-                fontFamily: "'Space Mono', monospace", fontSize: 11,
-                color: "rgba(255,255,255,0.4)", letterSpacing: 1.5,
-                textTransform: "uppercase"
-              }}>{stat.label}</div>
-            </div>
+    <>
+      <nav style={{
+        background:"#fff", borderBottom:"1px solid #e5e7eb",
+        padding:"0 40px", height:60,
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        position:"sticky", top:0, zIndex:100,
+        boxShadow:"0 1px 4px rgba(0,0,0,0.07)"
+      }}>
+        <span style={{ fontFamily:"Inter,sans-serif", fontWeight:800, fontSize:17, color:"#111", letterSpacing:-0.5 }}>
+          CS — Ticket System
+        </span>
+        <div style={{ display:"flex", alignItems:"center", gap:28 }} className="nav-links">
+          {["Home","FAQ","Changelog","Blog","Download","Contact"].map(n => (
+            <a key={n} href="#" style={{ fontFamily:"Inter,sans-serif", fontSize:13, color:"#6b7280", textDecoration:"none", transition:"color 0.2s" }}
+              onMouseEnter={e=>e.target.style.color="#111"} onMouseLeave={e=>e.target.style.color="#6b7280"}>{n}</a>
           ))}
+          <button onClick={onNew} style={{
+            background:"linear-gradient(135deg,#7c3aed,#6d28d9)", color:"#fff", border:"none",
+            borderRadius:8, padding:"8px 18px", fontFamily:"Inter,sans-serif",
+            fontWeight:700, fontSize:13, cursor:"pointer",
+            boxShadow:"0 2px 8px rgba(124,58,237,0.35)", transition:"transform 0.15s"
+          }}
+          onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"}
+          onMouseLeave={e=>e.currentTarget.style.transform=""}>
+            + New Ticket
+          </button>
+        </div>
+        <button onClick={()=>setMobileOpen(!mobileOpen)} className="hamburger" style={{
+          display:"none", background:"none", border:"none", cursor:"pointer", flexDirection:"column", gap:5, padding:4
+        }}>
+          {[0,1,2].map(i=><span key={i} style={{ display:"block", width:22, height:2, background:"#111", borderRadius:2 }}/>)}
+        </button>
+      </nav>
+
+      {mobileOpen && (
+        <div style={{ position:"fixed", inset:0, zIndex:99, background:"#fff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:28 }}>
+          <button onClick={()=>setMobileOpen(false)} style={{ position:"absolute", top:20, right:24, background:"none", border:"none", fontSize:26, cursor:"pointer" }}>✕</button>
+          {["Home","FAQ","Changelog","Blog","Download","Contact"].map(n=>(
+            <a key={n} onClick={()=>setMobileOpen(false)} href="#" style={{ fontFamily:"Inter,sans-serif", fontSize:20, color:"#111", textDecoration:"none" }}>{n}</a>
+          ))}
+          <button onClick={()=>{onNew();setMobileOpen(false);}} style={{ background:"#7c3aed", color:"#fff", border:"none", borderRadius:8, padding:"12px 32px", fontFamily:"Inter,sans-serif", fontWeight:700, fontSize:15, cursor:"pointer" }}>+ New Ticket</button>
+        </div>
+      )}
+
+      <style>{`@media(max-width:768px){ .nav-links{display:none!important;} .hamburger{display:flex!important;} }`}</style>
+    </>
+  );
+}
+
+// ─── Banner ───────────────────────────────────────────────────────────────────
+function Banner({ inProgress, resolved }) {
+  return (
+    <section style={{ background:"#f3f4f6", padding:"28px 40px 32px" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }} className="banner-grid">
+
+        {/* In Progress */}
+        <div style={{
+          borderRadius:18, overflow:"hidden", position:"relative",
+          background:"linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%)",
+          minHeight:155, display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center", padding:"32px 24px",
+          boxShadow:"0 8px 32px rgba(124,58,237,0.25)"
+        }}>
+          <div style={{
+            position:"absolute", inset:0,
+            backgroundImage:"url('/vector1.png')",
+            backgroundSize:"cover", backgroundPosition:"center right",
+            opacity:0.2, mixBlendMode:"screen"
+          }}/>
+          <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:"rgba(167,139,250,0.3)", filter:"blur(40px)" }}/>
+          <p style={{ fontFamily:"Inter,sans-serif", fontSize:15, color:"rgba(255,255,255,0.8)", fontWeight:500, marginBottom:10, zIndex:1, letterSpacing:0.3 }}>In-Progress</p>
+          <p style={{ fontFamily:"Inter,sans-serif", fontSize:72, fontWeight:800, color:"#fff", lineHeight:1, zIndex:1 }}>{inProgress}</p>
+        </div>
+
+        {/* Resolved */}
+        <div style={{
+          borderRadius:18, overflow:"hidden", position:"relative",
+          background:"linear-gradient(135deg,#16a34a 0%,#15803d 100%)",
+          minHeight:155, display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center", padding:"32px 24px",
+          boxShadow:"0 8px 32px rgba(22,163,74,0.25)"
+        }}>
+          <div style={{
+            position:"absolute", inset:0,
+            backgroundImage:"url('/vector1.png')",
+            backgroundSize:"cover", backgroundPosition:"center right",
+            opacity:0.15, mixBlendMode:"screen"
+          }}/>
+          <div style={{ position:"absolute", top:-40, left:-40, width:180, height:180, borderRadius:"50%", background:"rgba(74,222,128,0.25)", filter:"blur(40px)" }}/>
+          <p style={{ fontFamily:"Inter,sans-serif", fontSize:15, color:"rgba(255,255,255,0.8)", fontWeight:500, marginBottom:10, zIndex:1, letterSpacing:0.3 }}>Resolved</p>
+          <p style={{ fontFamily:"Inter,sans-serif", fontSize:72, fontWeight:800, color:"#fff", lineHeight:1, zIndex:1 }}>{resolved}</p>
         </div>
       </div>
+      <style>{`@media(max-width:600px){.banner-grid{grid-template-columns:1fr!important;}}`}</style>
     </section>
   );
 }
 
 // ─── Ticket Card ──────────────────────────────────────────────────────────────
 function TicketCard({ ticket, onAdd, isInProgress }) {
-  const pc = PRIORITY_COLOR[ticket.priority] || { bg: "#888", text: "#fff" };
+  const ps = PRIORITY[ticket.priority] || PRIORITY.Medium;
   return (
-    <div
-      onClick={() => !isInProgress && onAdd(ticket)}
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: `1px solid ${isInProgress ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.07)"}`,
-        borderRadius: 14, padding: "20px 22px",
-        cursor: isInProgress ? "default" : "pointer",
-        transition: "border-color 0.2s, transform 0.15s, box-shadow 0.2s",
-        position: "relative", overflow: "hidden"
-      }}
-      onMouseEnter={e => {
-        if (!isInProgress) {
-          e.currentTarget.style.borderColor = "rgba(0,255,136,0.35)";
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
-        }
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = isInProgress ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.07)";
-        e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = "";
-      }}
-    >
-      {isInProgress && (
-        <div style={{
-          position: "absolute", top: 0, right: 0,
-          background: "rgba(245,158,11,0.15)", borderBottomLeftRadius: 8,
-          padding: "3px 10px", fontSize: 10,
-          fontFamily: "'Space Mono', monospace", color: "#f59e0b", letterSpacing: 1
-        }}>IN PROGRESS</div>
-      )}
+    <div onClick={()=>!isInProgress && onAdd(ticket)} style={{
+      background:"#fff", border:"1px solid #e5e7eb", borderRadius:12,
+      padding:"18px 20px", cursor:isInProgress?"default":"pointer",
+      transition:"box-shadow 0.2s, transform 0.15s",
+      boxShadow:"0 1px 3px rgba(0,0,0,0.06)",
+      borderLeft: isInProgress ? "3px solid #7c3aed" : "3px solid transparent"
+    }}
+    onMouseEnter={e=>{ if(!isInProgress){ e.currentTarget.style.boxShadow="0 6px 20px rgba(0,0,0,0.1)"; e.currentTarget.style.transform="translateY(-2px)"; }}}
+    onMouseLeave={e=>{ e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,0.06)"; e.currentTarget.style.transform=""; }}>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8, gap:10 }}>
+        <h3 style={{ fontFamily:"Inter,sans-serif", fontWeight:700, fontSize:14, color:"#111", lineHeight:1.4, margin:0 }}>
+          {ticket.title}
+        </h3>
         <span style={{
-          fontFamily: "'Space Mono', monospace", fontSize: 11,
-          color: "rgba(255,255,255,0.3)", letterSpacing: 1
-        }}>#{ticket.id.toString().padStart(4, "0")}</span>
-        <span style={{
-          background: pc.bg, color: pc.text, borderRadius: 6,
-          padding: "3px 10px", fontSize: 10, fontWeight: 700,
-          fontFamily: "'Space Mono', monospace", letterSpacing: 0.5
-        }}>{ticket.priority}</span>
+          background: isInProgress ? "#ede9fe" : "#dcfce7",
+          color: isInProgress ? "#7c3aed" : "#16a34a",
+          border:`1px solid ${isInProgress?"#c4b5fd":"#bbf7d0"}`,
+          borderRadius:20, padding:"3px 10px", fontSize:10,
+          fontFamily:"Inter,sans-serif", fontWeight:700,
+          whiteSpace:"nowrap", flexShrink:0, letterSpacing:0.3
+        }}>
+          {isInProgress ? "In-Progress" : "Open"}
+        </span>
       </div>
-
-      <h3 style={{
-        fontFamily: "'Syne', sans-serif", fontWeight: 700,
-        fontSize: 15, color: "#fff", marginBottom: 8, lineHeight: 1.4
-      }}>{ticket.title}</h3>
 
       <p style={{
-        fontFamily: "'Space Mono', monospace", fontSize: 12,
-        color: "rgba(255,255,255,0.4)", lineHeight: 1.7, marginBottom: 14,
-        display: "-webkit-box", WebkitLineClamp: 2,
-        WebkitBoxOrient: "vertical", overflow: "hidden"
+        fontFamily:"Inter,sans-serif", fontSize:12, color:"#6b7280",
+        lineHeight:1.65, marginBottom:14,
+        display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"
       }}>{ticket.description}</p>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%",
-            background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 700, color: "#000"
-          }}>{ticket.customer[0]}</div>
-          <span style={{
-            fontFamily: "'Space Mono', monospace", fontSize: 11,
-            color: "rgba(255,255,255,0.5)"
-          }}>{ticket.customer}</span>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:6 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:"#9ca3af", fontWeight:500 }}>#{ticket.id}</span>
+          <span style={{ fontFamily:"Inter,sans-serif", fontSize:10, color:ps.color, fontWeight:700, letterSpacing:0.5 }}>{ps.label}</span>
         </div>
-        <span style={{
-          fontFamily: "'Space Mono', monospace", fontSize: 10,
-          color: "rgba(255,255,255,0.25)"
-        }}>{ticket.createdAt}</span>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:"#6b7280" }}>{ticket.customer}</span>
+          <span style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:"#9ca3af" }}>📅 {ticket.createdAt}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Task Status Panel ────────────────────────────────────────────────────────
-function TaskStatusPanel({ inProgress, resolved, onComplete }) {
+// ─── Task Status ──────────────────────────────────────────────────────────────
+function TaskStatus({ inProgress, resolved, onComplete }) {
   return (
-    <div style={{
-      background: "rgba(255,255,255,0.02)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      borderRadius: 16, padding: 24,
-      position: "sticky", top: 80,
-      maxHeight: "calc(100vh - 100px)", overflowY: "auto"
-    }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", boxShadow: "0 0 8px #f59e0b" }} />
-          <h2 style={{
-            fontFamily: "'Syne', sans-serif", fontWeight: 700,
-            fontSize: 16, color: "#fff", margin: 0
-          }}>In Progress ({inProgress.length})</h2>
+    <div style={{ fontFamily:"Inter,sans-serif" }}>
+      <h2 style={{ fontSize:17, fontWeight:800, color:"#111", marginBottom:4 }}>Task Status</h2>
+      <p style={{ fontSize:12, color:"#9ca3af", marginBottom:20 }}>
+        {inProgress.length===0 ? "Select a ticket to add to Task Status" : `${inProgress.length} ticket${inProgress.length>1?"s":""} in progress`}
+      </p>
+
+      {inProgress.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:28 }}>
+          {inProgress.map(t=>(
+            <div key={t.id} style={{ background:"#faf5ff", border:"1px solid #e9d5ff", borderRadius:10, padding:"14px 14px 12px" }}>
+              <p style={{ fontSize:13, fontWeight:600, color:"#111", marginBottom:10, lineHeight:1.4 }}>{t.title}</p>
+              <button onClick={()=>onComplete(t)} style={{
+                width:"100%", background:"linear-gradient(135deg,#7c3aed,#6d28d9)",
+                color:"#fff", border:"none", borderRadius:7, padding:"8px 0",
+                fontFamily:"Inter,sans-serif", fontWeight:700, fontSize:12,
+                cursor:"pointer", boxShadow:"0 2px 8px rgba(124,58,237,0.3)",
+                transition:"transform 0.15s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"}
+              onMouseLeave={e=>e.currentTarget.style.transform=""}>
+                ✓ Complete
+              </button>
+            </div>
+          ))}
         </div>
+      )}
 
-        {inProgress.length === 0 ? (
-          <div style={{
-            border: "1px dashed rgba(255,255,255,0.1)",
-            borderRadius: 10, padding: "24px 16px", textAlign: "center"
-          }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>📭</div>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>
-              Click any ticket to start working
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {inProgress.map(t => (
-              <div key={t.id} style={{
-                background: "rgba(245,158,11,0.06)",
-                border: "1px solid rgba(245,158,11,0.2)",
-                borderRadius: 10, padding: 14
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{
-                    fontFamily: "'Space Mono', monospace", fontSize: 10,
-                    color: "rgba(255,255,255,0.3)"
-                  }}>#{t.id.toString().padStart(4, "0")}</span>
-                  <span style={{
-                    background: PRIORITY_COLOR[t.priority]?.bg, color: PRIORITY_COLOR[t.priority]?.text,
-                    borderRadius: 4, padding: "1px 7px", fontSize: 9, fontFamily: "'Space Mono', monospace"
-                  }}>{t.priority}</span>
-                </div>
-                <p style={{
-                  fontFamily: "'Syne', sans-serif", fontWeight: 600,
-                  fontSize: 13, color: "#fff", marginBottom: 12, lineHeight: 1.4
-                }}>{t.title}</p>
-                <button onClick={() => onComplete(t)} style={{
-                  width: "100%", background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-                  border: "none", borderRadius: 7, padding: "8px 0",
-                  fontFamily: "'Space Mono', monospace", fontWeight: 700,
-                  fontSize: 11, cursor: "pointer", color: "#000", letterSpacing: 0.5,
-                  transition: "opacity 0.15s"
-                }}
-                onMouseEnter={e => e.target.style.opacity = 0.85}
-                onMouseLeave={e => e.target.style.opacity = 1}
-                >✓ Mark Complete</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Resolved */}
-      {resolved.length > 0 && (
-        <div>
-          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 20 }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 8px #00ff88" }} />
-            <h2 style={{
-              fontFamily: "'Syne', sans-serif", fontWeight: 700,
-              fontSize: 16, color: "#fff", margin: 0
-            }}>Resolved ({resolved.length})</h2>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {resolved.map(t => (
-              <div key={t.id} style={{
-                background: "rgba(0,255,136,0.04)",
-                border: "1px solid rgba(0,255,136,0.15)",
-                borderRadius: 10, padding: "10px 14px",
-                display: "flex", alignItems: "center", gap: 10
-              }}>
-                <span style={{ color: "#00ff88", fontSize: 14 }}>✓</span>
-                <span style={{
-                  fontFamily: "'Space Mono', monospace", fontSize: 11,
-                  color: "rgba(255,255,255,0.45)", textDecoration: "line-through"
-                }}>{t.title}</span>
-              </div>
-            ))}
-          </div>
+      <div style={{ height:1, background:"#f3f4f6", marginBottom:20 }}/>
+      <h2 style={{ fontSize:17, fontWeight:800, color:"#111", marginBottom:4 }}>Resolved Task</h2>
+      {resolved.length===0 ? (
+        <p style={{ fontSize:12, color:"#9ca3af" }}>No resolved tasks yet.</p>
+      ):(
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {resolved.map(t=>(
+            <div key={t.id} style={{
+              background:"#f0fdf4", border:"1px solid #bbf7d0",
+              borderRadius:10, padding:"10px 14px",
+              display:"flex", alignItems:"center", gap:10
+            }}>
+              <span style={{ color:"#16a34a", fontSize:14, fontWeight:700 }}>✓</span>
+              <span style={{ fontSize:12, color:"#6b7280", textDecoration:"line-through" }}>{t.title}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-// ─── New Ticket Modal ─────────────────────────────────────────────────────────
-function NewTicketModal({ onClose, onSubmit }) {
-  const [form, setForm] = useState({ title: "", description: "", customer: "", priority: "Medium" });
-  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-
-  const inputStyle = {
-    width: "100%", background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-    padding: "10px 14px", color: "#fff", outline: "none",
-    fontFamily: "'Space Mono', monospace", fontSize: 13,
-    boxSizing: "border-box"
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function Modal({ onClose, onSubmit }) {
+  const [form, setForm] = useState({ title:"", description:"", customer:"", priority:"Medium" });
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const inp = {
+    width:"100%", border:"1px solid #e5e7eb", borderRadius:8,
+    padding:"10px 14px", fontSize:13, fontFamily:"Inter,sans-serif",
+    outline:"none", color:"#111", background:"#fff", boxSizing:"border-box"
   };
-  const labelStyle = {
-    fontFamily: "'Space Mono', monospace", fontSize: 11,
-    color: "rgba(255,255,255,0.5)", letterSpacing: 1, textTransform: "uppercase",
-    display: "block", marginBottom: 6
-  };
-
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 200,
-      background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 20
-    }} onClick={onClose}>
-      <div style={{
-        background: "#0e0e18", border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: 18, padding: 32, width: "100%", maxWidth: 480,
-        boxShadow: "0 24px 80px rgba(0,0,0,0.6)"
-      }} onClick={e => e.stopPropagation()}>
-        <h2 style={{
-          fontFamily: "'Syne', sans-serif", fontWeight: 800,
-          fontSize: 22, color: "#fff", marginBottom: 24
-        }}>Submit New Ticket</h2>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.45)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={onClose}>
+      <div style={{ background:"#fff", borderRadius:18, padding:32, width:"100%", maxWidth:460, boxShadow:"0 24px 60px rgba(0,0,0,0.18)" }} onClick={e=>e.stopPropagation()}>
+        <h2 style={{ fontFamily:"Inter,sans-serif", fontWeight:800, fontSize:20, color:"#111", marginBottom:24 }}>Submit New Ticket</h2>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          {[["title","Title","Briefly describe the issue","input"],["description","Description","Detailed description...","textarea"],["customer","Customer Name","Full name","input"]].map(([k,label,ph,type])=>(
+            <div key={k}>
+              <label style={{ fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:700, color:"#374151", display:"block", marginBottom:5, textTransform:"uppercase", letterSpacing:0.5 }}>{label}</label>
+              {type==="input"
+                ? <input style={inp} placeholder={ph} value={form[k]} onChange={e=>set(k,e.target.value)} onFocus={e=>e.target.style.borderColor="#7c3aed"} onBlur={e=>e.target.style.borderColor="#e5e7eb"}/>
+                : <textarea style={{...inp,minHeight:80,resize:"vertical"}} placeholder={ph} value={form[k]} onChange={e=>set(k,e.target.value)} onFocus={e=>e.target.style.borderColor="#7c3aed"} onBlur={e=>e.target.style.borderColor="#e5e7eb"}/>
+              }
+            </div>
+          ))}
           <div>
-            <label style={labelStyle}>Title</label>
-            <input style={inputStyle} placeholder="Briefly describe the issue"
-              value={form.title} onChange={e => set("title", e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Description</label>
-            <textarea style={{ ...inputStyle, minHeight: 90, resize: "vertical" }}
-              placeholder="Detailed description..."
-              value={form.description} onChange={e => set("description", e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Customer Name</label>
-            <input style={inputStyle} placeholder="Your full name"
-              value={form.customer} onChange={e => set("customer", e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Priority</label>
-            <select style={{ ...inputStyle, cursor: "pointer" }}
-              value={form.priority} onChange={e => set("priority", e.target.value)}>
-              {["Low", "Medium", "High", "Critical"].map(p => (
-                <option key={p} value={p} style={{ background: "#0e0e18" }}>{p}</option>
-              ))}
+            <label style={{ fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:700, color:"#374151", display:"block", marginBottom:5, textTransform:"uppercase", letterSpacing:0.5 }}>Priority</label>
+            <select style={{...inp,cursor:"pointer"}} value={form.priority} onChange={e=>set("priority",e.target.value)}>
+              {["Low","Medium","High","Critical"].map(p=><option key={p}>{p}</option>)}
             </select>
           </div>
-
-          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-            <button onClick={onClose} style={{
-              flex: 1, background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-              padding: "11px 0", fontFamily: "'Space Mono', monospace",
-              fontSize: 13, color: "rgba(255,255,255,0.6)", cursor: "pointer"
-            }}>Cancel</button>
-            <button onClick={() => {
-              if (!form.title.trim() || !form.customer.trim()) return;
-              onSubmit(form);
-            }} style={{
-              flex: 1, background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-              border: "none", borderRadius: 8, padding: "11px 0",
-              fontFamily: "'Space Mono', monospace", fontWeight: 700,
-              fontSize: 13, cursor: "pointer", color: "#000"
-            }}>Submit</button>
+          <div style={{ display:"flex", gap:12, marginTop:8 }}>
+            <button onClick={onClose} style={{ flex:1, background:"#f3f4f6", border:"1px solid #e5e7eb", borderRadius:8, padding:"11px 0", fontFamily:"Inter,sans-serif", fontSize:13, fontWeight:600, color:"#6b7280", cursor:"pointer" }}>Cancel</button>
+            <button onClick={()=>{ if(!form.title.trim()||!form.customer.trim()) return; onSubmit(form); }} style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#6d28d9)", border:"none", borderRadius:8, padding:"11px 0", fontFamily:"Inter,sans-serif", fontSize:13, fontWeight:700, color:"#fff", cursor:"pointer" }}>Submit</button>
           </div>
         </div>
       </div>
@@ -514,218 +300,127 @@ function NewTicketModal({ onClose, onSubmit }) {
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
+  const cols = [
+    { title:"Company",     links:["About Us","Our Mission","Team & Culture","Contact Us","Donate Now"] },
+    { title:"Services",    links:["Features & Pricing","Product & Service","Terms & Condition","Download App"] },
+    { title:"Information", links:["Privacy Policy","Terms & Condition","Refund Policy","FAQ"] },
+    { title:"Social Links",links:["Twitter / X","LinkedIn","GitHub","Discord","YouTube"] },
+  ];
   return (
-    <footer style={{
-      background: "#05050c",
-      borderTop: "1px solid rgba(255,255,255,0.06)",
-      padding: "48px 40px 32px"
-    }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{
-          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 40, marginBottom: 48
-        }}>
+    <footer style={{ background:"#111827", padding:"52px 40px 28px", marginTop:80 }}>
+      <div style={{ maxWidth:1100, margin:"0 auto" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1.4fr repeat(4,1fr)", gap:40, marginBottom:44 }} className="footer-grid">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 8,
-                background: "linear-gradient(135deg,#00ff88,#00b4d8)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 900, fontSize: 16, color: "#000"
-              }}>S</div>
-              <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 16, color: "#fff" }}>SupportZone</span>
-            </div>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.35)", lineHeight: 1.9 }}>
-              Streamlined customer support ticket management for modern teams.
+            <h3 style={{ fontFamily:"Inter,sans-serif", fontWeight:800, fontSize:17, color:"#fff", marginBottom:14 }}>CS — Ticket System</h3>
+            <p style={{ fontFamily:"Inter,sans-serif", fontSize:13, color:"#9ca3af", lineHeight:1.9, maxWidth:220 }}>
+              Streamlined customer support management built for modern teams.
             </p>
+            <div style={{ marginTop:20 }}>
+              <p style={{ fontFamily:"Inter,sans-serif", fontSize:11, color:"#6b7280", letterSpacing:0.5, textTransform:"uppercase", marginBottom:8 }}>Contact</p>
+              <p style={{ fontFamily:"Inter,sans-serif", fontSize:12, color:"#9ca3af", marginBottom:4 }}>support@csticket.com</p>
+              <p style={{ fontFamily:"Inter,sans-serif", fontSize:12, color:"#9ca3af" }}>+1 (800) 123-4567</p>
+            </div>
           </div>
-
-          {[
-            { title: "Product", links: ["Features", "Pricing", "Changelog", "Roadmap"] },
-            { title: "Company", links: ["About", "Blog", "Careers", "Press"] },
-            { title: "Support", links: ["Docs", "API Reference", "Status", "Contact"] },
-          ].map(col => (
+          {cols.map(col=>(
             <div key={col.title}>
-              <h4 style={{
-                fontFamily: "'Space Mono', monospace", fontSize: 11,
-                color: "rgba(255,255,255,0.5)", letterSpacing: 2,
-                textTransform: "uppercase", marginBottom: 16
-              }}>{col.title}</h4>
-              {col.links.map(l => (
-                <a key={l} href="#" style={{
-                  display: "block", fontFamily: "'Space Mono', monospace",
-                  fontSize: 13, color: "rgba(255,255,255,0.4)",
-                  textDecoration: "none", marginBottom: 10,
-                  transition: "color 0.2s"
-                }}
-                onMouseEnter={e => e.target.style.color = "#00ff88"}
-                onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.4)"}
-                >{l}</a>
+              <h4 style={{ fontFamily:"Inter,sans-serif", fontSize:12, fontWeight:700, color:"#fff", marginBottom:14, textTransform:"uppercase", letterSpacing:1 }}>{col.title}</h4>
+              {col.links.map(l=>(
+                <a key={l} href="#" style={{ display:"block", fontFamily:"Inter,sans-serif", fontSize:13, color:"#9ca3af", textDecoration:"none", marginBottom:9, transition:"color 0.2s" }}
+                  onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="#9ca3af"}>{l}</a>
               ))}
             </div>
           ))}
         </div>
-
-        <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          paddingTop: 24, display: "flex", justifyContent: "space-between",
-          alignItems: "center", flexWrap: "wrap", gap: 12
-        }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
-            © 2025 SupportZone. Built for Assignment-02 (সহজ সরল সিম্পল).
+        <div style={{ borderTop:"1px solid #1f2937", paddingTop:22, textAlign:"center" }}>
+          <span style={{ fontFamily:"Inter,sans-serif", fontSize:12, color:"#4b5563" }}>
+            © 2025 CS — Ticket System. All rights reserved. | Assignment-02 সহজ সরল সিম্পল
           </span>
-          <div style={{ display: "flex", gap: 20 }}>
-            {["Privacy", "Terms", "Cookies"].map(l => (
-              <a key={l} href="#" style={{
-                fontFamily: "'Space Mono', monospace", fontSize: 11,
-                color: "rgba(255,255,255,0.25)", textDecoration: "none"
-              }}>{l}</a>
-            ))}
-          </div>
         </div>
       </div>
+      <style>{`@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr!important;}}`}</style>
     </footer>
   );
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tickets, setTickets] = useState(INITIAL_TICKETS);
+  const [tickets, setTickets]       = useState(INITIAL_TICKETS);
   const [inProgress, setInProgress] = useState([]);
-  const [resolved, setResolved] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [resolved, setResolved]     = useState([]);
+  const [showModal, setShowModal]   = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { toasts, addToast, removeToast } = useToast();
 
-  const handleAddToProgress = (ticket) => {
-    if (inProgress.find(t => t.id === ticket.id)) {
-      addToast("Already in progress!", "warning");
-      return;
-    }
-    setInProgress(prev => [...prev, ticket]);
-    addToast(`"${ticket.title}" added to In Progress`, "info");
+  const handleAdd = ticket => {
+    if (inProgress.find(t=>t.id===ticket.id)) { addToast("Already in progress!","error"); return; }
+    setInProgress(p=>[...p,ticket]);
+    addToast("Ticket added to In-Progress!","info");
   };
 
-  const handleComplete = (ticket) => {
-    setInProgress(prev => prev.filter(t => t.id !== ticket.id));
-    setResolved(prev => [...prev, ticket]);
-    setTickets(prev => prev.filter(t => t.id !== ticket.id));
-    addToast(`"${ticket.title}" resolved! 🎉`, "success");
+  const handleComplete = ticket => {
+    setInProgress(p=>p.filter(t=>t.id!==ticket.id));
+    setResolved(p=>[...p,ticket]);
+    setTickets(p=>p.filter(t=>t.id!==ticket.id));
+    addToast("Ticket resolved! 🎉","success");
   };
 
-  const handleNewTicket = (form) => {
-    const newTicket = {
-      id: Date.now(),
-      title: form.title,
-      description: form.description,
-      customer: form.customer,
-      priority: form.priority,
-      status: "open",
-      createdAt: new Date().toISOString().split("T")[0]
-    };
-    setTickets(prev => [newTicket, ...prev]);
+  const handleNew = form => {
+    setTickets(p=>[{ id:Date.now(), ...form, status:"open", createdAt:new Date().toLocaleDateString("en-US") }, ...p]);
     setShowModal(false);
-    addToast("New ticket submitted!", "success");
+    addToast("New ticket submitted!","success");
   };
-
-  const openTickets = tickets.filter(t => !resolved.find(r => r.id === t.id));
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #08080e; color: #111; }
-        @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:none; } }
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        body{background:#f3f4f6;font-family:Inter,sans-serif;}
+        @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+        ::-webkit-scrollbar{width:6px;}
+        ::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:3px;}
+        @media(max-width:900px){.main-layout{grid-template-columns:1fr!important;}}
+        @media(max-width:560px){.ticket-grid{grid-template-columns:1fr!important;}}
       `}</style>
 
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-      {showModal && <NewTicketModal onClose={() => setShowModal(false)} onSubmit={handleNewTicket} />}
-      <MobileMenu open={mobileOpen} onNewTicket={() => setShowModal(true)} onClose={() => setMobileOpen(false)} />
+      <ToastContainer toasts={toasts} removeToast={removeToast}/>
+      {showModal && <Modal onClose={()=>setShowModal(false)} onSubmit={handleNew}/>}
 
-      <Navbar onNewTicket={() => setShowModal(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <Navbar onNew={()=>setShowModal(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}/>
+      <Banner inProgress={inProgress.length} resolved={resolved.length}/>
 
-      <Banner
-        inProgressCount={inProgress.length}
-        resolvedCount={resolved.length}
-        totalCount={openTickets.length}
-      />
+      <main style={{ maxWidth:1100, margin:"0 auto", padding:"36px 24px" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 268px", gap:36, alignItems:"start" }} className="main-layout">
 
-      {/* Main */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 340px",
-          gap: 32,
-          alignItems: "start"
-        }} className="main-grid">
-          {/* Left: Tickets */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-              <h2 style={{
-                fontFamily: "'Syne', sans-serif", fontWeight: 800,
-                fontSize: 20, color: "#fff"
-              }}>Customer Tickets
-                <span style={{
-                  fontFamily: "'Space Mono', monospace", fontWeight: 400,
-                  fontSize: 13, color: "rgba(255,255,255,0.3)", marginLeft: 10
-                }}>({openTickets.length})</span>
+            <div style={{ display:"flex", alignItems:"center", marginBottom:18 }}>
+              <h2 style={{ fontFamily:"Inter,sans-serif", fontWeight:800, fontSize:19, color:"#111" }}>
+                Customer Tickets
+                <span style={{ fontFamily:"Inter,sans-serif", fontWeight:500, fontSize:14, color:"#9ca3af", marginLeft:8 }}>({tickets.length})</span>
               </h2>
             </div>
 
-            {openTickets.length === 0 ? (
-              <div style={{
-                textAlign: "center", padding: "80px 40px",
-                border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16
-              }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-                <p style={{ fontFamily: "'Space Mono', monospace", color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
-                  All tickets resolved!
-                </p>
+            {tickets.length===0 ? (
+              <div style={{ textAlign:"center", padding:"80px 40px", background:"#fff", borderRadius:14, border:"1px solid #e5e7eb" }}>
+                <div style={{ fontSize:48, marginBottom:14 }}>🎉</div>
+                <p style={{ fontFamily:"Inter,sans-serif", color:"#6b7280", fontWeight:600 }}>All tickets resolved!</p>
               </div>
-            ) : (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 16
-              }} className="ticket-grid">
-                {openTickets.map(ticket => (
-                  <TicketCard
-                    key={ticket.id}
-                    ticket={ticket}
-                    onAdd={handleAddToProgress}
-                    isInProgress={!!inProgress.find(t => t.id === ticket.id)}
-                  />
+            ):(
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }} className="ticket-grid">
+                {tickets.map(t=>(
+                  <TicketCard key={t.id} ticket={t} onAdd={handleAdd} isInProgress={!!inProgress.find(x=>x.id===t.id)}/>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Right: Task Status */}
-          <div>
-            <TaskStatusPanel
-              inProgress={inProgress}
-              resolved={resolved}
-              onComplete={handleComplete}
-            />
+          <div style={{ position:"sticky", top:76, background:"#fff", borderRadius:14, border:"1px solid #e5e7eb", padding:"24px 20px", boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+            <TaskStatus inProgress={inProgress} resolved={resolved} onComplete={handleComplete}/>
           </div>
         </div>
       </main>
 
-      <Footer />
-
-      <style>{`
-        @media(max-width: 900px) {
-          .main-grid { grid-template-columns: 1fr !important; }
-          .ticket-grid { grid-template-columns: 1fr !important; }
-        }
-        @media(max-width: 480px) {
-          .ticket-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      <Footer/>
     </>
   );
 }
